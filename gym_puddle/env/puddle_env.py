@@ -8,35 +8,6 @@ import pygame
 import numpy as np
 
 
-def closest_puddle_edge(agent_pos, puddle_center, puddle_width, puddle_height):
-    """
-    Calculate the closest distances from the agent to the nearest puddle edge in each direction.
-    :param agent_pos: Tuple (x, y) representing the agent's current position.
-    :param puddle_center: Tuple (x_c, y_c) representing the center of the puddle.
-    :param puddle_width: Float, representing the width (diameter along x-axis) of the puddle.
-    :param puddle_height: Float, representing the height (diameter along y-axis) of the puddle.
-    :return: Dictionary with distances to the closest puddle edge on the left, right, top, and bottom.
-    """
-    x, y = agent_pos
-    x_c, y_c = puddle_center
-    w_half = puddle_width / 2
-    h_half = puddle_height / 2
-
-    left_dist = x - (x_c - w_half)
-    right_dist = (x_c + w_half) - x
-    top_dist = (y_c + h_half) - y
-    bottom_dist = y - (y_c - h_half)
-
-    # Ensure that only positive distances are considered (negative values mean no intersection in that direction)
-    distances = {
-        'left': left_dist if left_dist > 0 else 1,
-        'right': right_dist if right_dist > 0 else 1,
-        'top': top_dist if top_dist > 0 else 1,
-        'bottom': bottom_dist if bottom_dist > 0 else 1
-    }
-
-    return distances
-
 class PuddleEnv(gymnasium.Env):
     def __init__(
         self,
