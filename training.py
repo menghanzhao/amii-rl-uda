@@ -188,6 +188,7 @@ elif agent == 'RL':
           action, _states = dqn_model.predict(obs)
           observation, reward, done, trunc, info = env.step(action)
           total_reward += reward
+
           if done == True:
             print("here")
 
