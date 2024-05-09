@@ -92,7 +92,7 @@ def evaluate_model(model, eval_episodes, env):
         obs, reward, done, trunc, info = env.step(action)
         total_reward += reward
 
-        if done == True:
+        if done:
           print("here")
 
         image = env.render()

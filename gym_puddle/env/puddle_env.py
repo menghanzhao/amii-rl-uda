@@ -97,7 +97,7 @@ class PuddleEnv(gymnasium.Env):
     def distance_to_puddle_edges(self):
         x = self.pos[0]
         y = self.pos[1]
-        min_left = min_right = min_top = min_bottom = np.inf
+        min_left = min_right = min_top = min_bottom = 1
 
         # Iterate over each puddle
         for top_left, width in zip(self.puddle_top_left, self.puddle_width):
@@ -122,11 +122,12 @@ class PuddleEnv(gymnasium.Env):
 
         # Prepare the distances dictionary, converting np.inf to None for clarity
         distances = {
-            'left': None if min_left == np.inf else min_left,
-            'right': None if min_right == np.inf else min_right,
-            'top': None if min_top == np.inf else min_top,
-            'bottom': None if min_bottom == np.inf else min_bottom
+            'left': None if min_left == 1 else min_left,
+            'right': None if min_right == 1 else min_right,
+            'top': None if min_top == 1 else min_top,
+            'bottom': None if min_bottom == 1 else min_bottom
         }
+        return distances
 
     def closest_escape_direction(self):
         x = self.pos[0]
