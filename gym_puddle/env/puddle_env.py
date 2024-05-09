@@ -89,7 +89,7 @@ class PuddleEnv(gymnasium.Env):
 
         done = np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold
 
-        distances = self.closest_puddle_edges()
+        # distances = self.closest_puddle_edges()
 
         return self.pos, reward, done, trunc, {}
 
@@ -152,39 +152,39 @@ class PuddleEnv(gymnasium.Env):
             self.pos = copy.copy(self.start)
         return self.pos, {}
 
-    def closest_puddle_edges(self):
-        x, y = self.agent_position
-        min_left = min_right = min_top = min_bottom = np.inf
+    # def closest_puddle_edges(self):
+    #     x, y = self.pos
+    #     min_left = min_right = min_top = min_bottom = np.inf
 
-        for center, width, height in self.puddles:
-            x_c, y_c = center
-            w_half = width / 2
-            h_half = height / 2
+    #     for center, width, height in self.puddles:
+    #         x_c, y_c = center
+    #         w_half = width / 2
+    #         h_half = height / 2
 
-            if y_c - h_half <= y <= y_c + h_half:  # Check vertical alignment for left/right calculation
-                left_edge = x_c - w_half
-                right_edge = x_c + w_half
-                if left_edge < x:
-                    min_left = min(min_left, x - left_edge)
-                if right_edge > x:
-                    min_right = min(min_right, right_edge - x)
+    #         if y_c - h_half <= y <= y_c + h_half:  # Check vertical alignment for left/right calculation
+    #             left_edge = x_c - w_half
+    #             right_edge = x_c + w_half
+    #             if left_edge < x:
+    #                 min_left = min(min_left, x - left_edge)
+    #             if right_edge > x:
+    #                 min_right = min(min_right, right_edge - x)
 
-            if x_c - w_half <= x <= x_c + w_half:  # Check horizontal alignment for top/bottom calculation
-                top_edge = y_c + h_half
-                bottom_edge = y_c - h_half
-                if bottom_edge < y:
-                    min_bottom = min(min_bottom, y - bottom_edge)
-                if top_edge > y:
-                    min_top = min(min_top, top_edge - y)
+    #         if x_c - w_half <= x <= x_c + w_half:  # Check horizontal alignment for top/bottom calculation
+    #             top_edge = y_c + h_half
+    #             bottom_edge = y_c - h_half
+    #             if bottom_edge < y:
+    #                 min_bottom = min(min_bottom, y - bottom_edge)
+    #             if top_edge > y:
+    #                 min_top = min(min_top, top_edge - y)
 
-        distances = {
-            'left': min_left if min_left != np.inf else None,
-            'right': min_right if min_right != np.inf else None,
-            'top': min_top if min_top != np.inf else None,
-            'bottom': min_bottom if min_bottom != np.inf else None
-        }
+    #     distances = {
+    #         'left': min_left if min_left != np.inf else None,
+    #         'right': min_right if min_right != np.inf else None,
+    #         'top': min_top if min_top != np.inf else None,
+    #         'bottom': min_bottom if min_bottom != np.inf else None
+    #     }
 
-        return distances
+    #     return distances
 
 
     def render(self) -> np.ndarray or None:  # type: ignore
