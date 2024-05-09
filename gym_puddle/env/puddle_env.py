@@ -122,10 +122,10 @@ class PuddleEnv(gymnasium.Env):
 
         # Prepare the distances dictionary, converting np.inf to None for clarity
         distances = {
-            'left': None if min_left == 1 else min_left,
-            'right': None if min_right == 1 else min_right,
-            'top': None if min_top == 1 else min_top,
-            'bottom': None if min_bottom == 1 else min_bottom
+            'left': 1 if min_left == 1 else min_left,
+            'right': 1 if min_right == 1 else min_right,
+            'top': 1 if min_top == 1 else min_top,
+            'bottom': 1 if min_bottom == 1 else min_bottom
         }
         return distances
 
