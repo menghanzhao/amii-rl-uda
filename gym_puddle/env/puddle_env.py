@@ -91,6 +91,7 @@ class PuddleEnv(gymnasium.Env):
 
         distances = self.closest_puddle_edges()
 
+
         return self.pos, reward, done, trunc, {}
 
     def _get_reward(self, pos: np.ndarray) -> float:
@@ -154,7 +155,7 @@ class PuddleEnv(gymnasium.Env):
 
     def closest_puddle_edges(self):
         x, y = self.agent_position
-        min_left = min_right = min_top = min_bottom = np.inf
+        min_left = min_right = min_top = min_bottom = 1
 
         for center, width, height in self.puddles:
             x_c, y_c = center
@@ -178,10 +179,10 @@ class PuddleEnv(gymnasium.Env):
                     min_top = min(min_top, top_edge - y)
 
         distances = {
-            'left': min_left if min_left != np.inf else None,
-            'right': min_right if min_right != np.inf else None,
-            'top': min_top if min_top != np.inf else None,
-            'bottom': min_bottom if min_bottom != np.inf else None
+            'left': min_left if min_left != 1 else None,
+            'right': min_right if min_right != 1 else None,
+            'top': min_top if min_top != 1 else None,
+            'bottom': min_bottom if min_bottom != 1 else None
         }
 
         return distances
