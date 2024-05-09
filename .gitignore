@@ -99,7 +99,7 @@ myenv/
 .mypy_cache/
 
 /utils/
-
+.zip
 
 
 

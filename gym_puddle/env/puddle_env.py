@@ -6,6 +6,9 @@ import copy
 import pygame
 
 import numpy as np
+import random
+import os
+import json
 
 
 class PuddleEnv(gymnasium.Env):
@@ -45,7 +48,10 @@ class PuddleEnv(gymnasium.Env):
         self.puddle_width = [np.array(width) for width in puddle_width]
 
         self.action_space = spaces.Discrete(4)
-        self.observation_space = spaces.Box(0.0, 1.0, shape=(2,), dtype=np.float64)
+
+        self.obs_low = np.array([0.0, 0.0, -1.0, -1.0, -1.0, -1.0, 1.0])
+        self.obs_high = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 5.0])
+        self.observation_space = spaces.Box(self.obs_low, self.obs_high, shape=(7,), dtype=np.float64)
 
         self.actions = [np.zeros(2) for i in range(4)]
 
@@ -53,6 +59,7 @@ class PuddleEnv(gymnasium.Env):
             self.actions[i][i // 2] = thrust * (i % 2 * 2 - 1)
 
         self.num_steps = 0
+        self.total_episodes = 0
 
         # Rendering
         self.metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 30}
@@ -62,6 +69,8 @@ class PuddleEnv(gymnasium.Env):
         self.window_size = 400
         self.min_reward = self.find_min_reward()
         self.heatmap = False
+        self.env = 1
+        self.total_rewards = 0
         
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
@@ -86,13 +95,19 @@ class PuddleEnv(gymnasium.Env):
         self.pos = np.clip(self.pos, 0.0, 1.0)
 
         reward = self._get_reward(self.pos)
+        self.total_rewards += reward
 
-        done = np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold
+        done = (np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold) or (self.num_steps > 500) or (self.total_rewards < -10000)
 
+        if done:
+            self.total_episodes += 1
         distances = self.distance_to_puddle_edges()
-        escape_direction = self.closest_escape_direction()
+        obs_lst = list(self.pos)
+        for item in distances:
+            obs_lst.append(item)
+        obs_lst.append(self.env)
 
-        return self.pos, reward, done, trunc, {}
+        return np.array(obs_lst), reward, done, trunc, {}
 
     def distance_to_puddle_edges(self):
         x = self.pos[0]
@@ -127,7 +142,14 @@ class PuddleEnv(gymnasium.Env):
             'top': 1 if min_top == 1 else min_top,
             'bottom': 1 if min_bottom == 1 else min_bottom
         }
-        return distances
+        escape_dir = self.closest_escape_direction()
+        if escape_dir != 0:
+            distances['left'] = - distances['left']
+            distances['right'] = - distances['right']
+            distances['top'] = - distances['top']
+            distances['bottom'] = - distances['bottom']
+
+        return list(distances.values())
 
     def closest_escape_direction(self):
         x = self.pos[0]
@@ -158,6 +180,8 @@ class PuddleEnv(gymnasium.Env):
                     escape_direction = 3  # Top
                 elif min_escape_dist == bottom_dist:
                     escape_direction = 4  # Bottom
+                else:
+                    escape_direction = 0
 
         return escape_direction
 
@@ -220,7 +244,28 @@ class PuddleEnv(gymnasium.Env):
                 self.pos = self.observation_space.sample()
         else:
             self.pos = copy.copy(self.start)
-        return self.pos, {}
+
+        if self.total_episodes % 10 == 0:
+            
+            self.env = random.randint(1, 5)
+            dir = os.getcwd()
+            json_dir = os.path.join(dir,'gym_puddle', 'env_configs', f'pw{self.env}.json')
+            with open(json_dir) as f:
+                
+                env_setup = json.load(f)
+
+                self.puddle_top_left = [np.array(top_left) for top_left in env_setup["puddle_top_left"]]
+                self.puddle_width = [np.array(width) for width in env_setup["puddle_width"]]
+
+        distances = self.distance_to_puddle_edges()
+        escape_direction = self.closest_escape_direction()
+        obs_lst = list(self.pos)
+        for item in distances:
+            obs_lst.append(item)
+        obs_lst.append(self.env)
+            
+        return np.array(obs_lst), {}
+        # return self.pos, {}
 
 
 
