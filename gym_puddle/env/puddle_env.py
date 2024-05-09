@@ -97,12 +97,11 @@ class PuddleEnv(gymnasium.Env):
         reward = self._get_reward(self.pos)
         self.total_rewards += reward
 
-        done = np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold or self.num_steps > 500 or self.total_rewards < -10000
+        done = (np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold) or (self.num_steps > 500) or (self.total_rewards < -10000)
 
         if done:
             self.total_episodes += 1
         distances = self.distance_to_puddle_edges()
-        escape_direction = self.closest_escape_direction()
         obs_lst = list(self.pos)
         for item in distances:
             obs_lst.append(item)
