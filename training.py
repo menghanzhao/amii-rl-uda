@@ -57,18 +57,20 @@ def train_model(total_episodes):
     total_reward = 0 # total rewards achieved in an episode
     total_steps = 0 # total steps made in an episode
 
-    # train model for 1 episode
-    model.learn(total_timesteps=int(1e5))
-
     while not done and total_reward >= -10000 and total_steps <= 500:
       action, _states = model.predict(obs)
       obs, reward, done, trunc, _ = env.step(action)
       total_reward += reward
       total_steps += 1
+    
+    # train model
+    model.learn(total_timesteps=int(500))
+
     if episode % 10 == 0:
       env.close()
       current_env_num, env = get_env_setup(current_env_num)
       model.set_env(env)
+    
 
   return model
 
@@ -112,10 +114,13 @@ def evaluate_model(model, eval_episodes, env):
   
   return frames, episode_rewards
 
+def generate_test_results_for_submission(model):
+  pass
+
 
 if __name__ == '__main__':
   #train the model, and save the trained model
-  total_episodes = 10000
+  total_episodes = 50
   trained_model = train_model(total_episodes)
   # dqn_model.save("dqn_model")
 
