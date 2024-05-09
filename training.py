@@ -32,7 +32,6 @@ def evaluate_model(model, eval_episodes, env):
 
   for episode in range(1, eval_episodes + 1):
     done = False
-
     while not done: # to avoid infinite loops for the untuned DQN we set a truncation limit, but you should make your agent sophisticated enough to avoid infinite-step episodes
         action, _states = model.predict(obs)
         obs, reward, done, trunc, info = env.step(action)
@@ -86,17 +85,17 @@ if __name__ == '__main__':
 
   # test the trained model
   # dqn_model = DQN.load("dqn_model")
-  env = gym.make(
-    "PuddleWorld-v0",
-    # start=env_setup["start"],
-    # goal=env_setup["goal"],
-    # goal_threshold=env_setup["goal_threshold"],
-    # noise=env_setup["noise"],
-    # thrust=env_setup["thrust"],
-    # puddle_top_left=env_setup["puddle_top_left"],
-    # puddle_width=env_setup["puddle_width"],
-  )
-  obs, info = env.reset()
+  # env = gym.make(
+  #   "PuddleWorld-v0",
+  #   # start=env_setup["start"],
+  #   # goal=env_setup["goal"],
+  #   # goal_threshold=env_setup["goal_threshold"],
+  #   # noise=env_setup["noise"],
+  #   # thrust=env_setup["thrust"],
+  #   # puddle_top_left=env_setup["puddle_top_left"],
+  #   # puddle_width=env_setup["puddle_width"],
+  # )
+  # obs, info = env.reset()
   frames, episode_rewards = evaluate_model(model, 10, env)
 
   # print(frames)
