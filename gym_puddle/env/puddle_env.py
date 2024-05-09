@@ -95,7 +95,7 @@ class PuddleEnv(gymnasium.Env):
 
         reward = self._get_reward(self.pos)
 
-        done = (np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold) or (self.num_steps > 500)
+        done = (np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold) or (self.num_steps > 5000)
 
         if done:
             self.total_episodes += 1
