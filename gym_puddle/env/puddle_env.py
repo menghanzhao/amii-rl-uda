@@ -70,7 +70,6 @@ class PuddleEnv(gymnasium.Env):
         self.min_reward = self.find_min_reward()
         self.heatmap = False
         self.env = 1
-        self.total_rewards = 0
         
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
@@ -95,9 +94,8 @@ class PuddleEnv(gymnasium.Env):
         self.pos = np.clip(self.pos, 0.0, 1.0)
 
         reward = self._get_reward(self.pos)
-        self.total_rewards += reward
 
-        done = (np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold) or (self.num_steps > 500) or (self.total_rewards < -10000)
+        done = (np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold) or (self.num_steps > 500)
 
         if done:
             self.total_episodes += 1

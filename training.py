@@ -23,7 +23,6 @@ ENV_CONFIGS = [
 
 
 def evaluate_model(model, eval_episodes, env):
-  obs, info = env.reset()
 
   # Create an empty list to store the frames
   frames = []
@@ -31,25 +30,20 @@ def evaluate_model(model, eval_episodes, env):
   episode_steps = []
 
   for episode in range(1, eval_episodes + 1):
+    obs, info = env.reset()
     done = False
+    total_reward = 0
     while not done: # to avoid infinite loops for the untuned DQN we set a truncation limit, but you should make your agent sophisticated enough to avoid infinite-step episodes
         action, _states = model.predict(obs)
         obs, reward, done, trunc, info = env.step(action)
-
+        total_reward += reward
+    episode_rewards.append(total_reward)
     image = env.render()
     frames.append(image)
-
-    print(f"total reward in this episode: {env.total_rewards}")
+    print(f"total reward in this episode: {total_reward}")
     print(f"total steps in this episode: {env.num_steps}")
-    episode_rewards.append(env.total_rewards)
 
   env.close()
-
-  if episode_rewards == []:
-    print("no episode finished in this run.")
-  else:
-    for i, reward in enumerate(episode_rewards):
-      print(f"episode {i}: reward: {reward}")
   
   return frames, episode_rewards
 
@@ -76,11 +70,12 @@ if __name__ == '__main__':
   )
 
   ## Initialize model
-  model = PPO("MlpPolicy" ,env, verbose=1)
+  env.reset()
+  model = DQN(DQNPolicy ,env, verbose=1)
   iter = 0
   while iter < 10:
     iter += 1
-    model.learn(total_timesteps=1000)
+    model.learn(total_timesteps=20000)
     model.save(f"dqn_model_iter{iter}")
 
   # test the trained model
@@ -95,7 +90,7 @@ if __name__ == '__main__':
   #   # puddle_top_left=env_setup["puddle_top_left"],
   #   # puddle_width=env_setup["puddle_width"],
   # )
-  # obs, info = env.reset()
+  obs, info = env.reset()
   frames, episode_rewards = evaluate_model(model, 10, env)
 
   # print(frames)
