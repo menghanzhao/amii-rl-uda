@@ -6,6 +6,9 @@ import copy
 import pygame
 
 import numpy as np
+import random
+import os
+import json
 
 
 class PuddleEnv(gymnasium.Env):
@@ -53,6 +56,7 @@ class PuddleEnv(gymnasium.Env):
             self.actions[i][i // 2] = thrust * (i % 2 * 2 - 1)
 
         self.num_steps = 0
+        self.total_episodes = 0
 
         # Rendering
         self.metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 30}
@@ -62,6 +66,8 @@ class PuddleEnv(gymnasium.Env):
         self.window_size = 400
         self.min_reward = self.find_min_reward()
         self.heatmap = False
+        self.env = 1
+        self.total_rewards = 0
         
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
@@ -86,9 +92,12 @@ class PuddleEnv(gymnasium.Env):
         self.pos = np.clip(self.pos, 0.0, 1.0)
 
         reward = self._get_reward(self.pos)
+        self.total_rewards += reward
 
-        done = np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold
+        done = np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold or self.num_steps > 500 or self.total_rewards < -10000
 
+        if done:
+            self.total_episodes += 1
         # distances = self.closest_puddle_edges()
 
         return self.pos, reward, done, trunc, {}
@@ -150,6 +159,19 @@ class PuddleEnv(gymnasium.Env):
                 self.pos = self.observation_space.sample()
         else:
             self.pos = copy.copy(self.start)
+
+        if self.total_episodes % 10 == 0:
+            
+            self.env = random.randint(1, 5)
+            dir = os.getcwd()
+            json_dir = os.path.join(dir,'gym_puddle', 'env_configs', f'pw{self.env}.json')
+            with open(json_dir) as f:
+                
+                env_setup = json.load(f)
+
+                self.puddle_top_left = [np.array(top_left) for top_left in env_setup["puddle_top_left"]]
+                self.puddle_width = [np.array(width) for width in env_setup["puddle_width"]]
+            
         return self.pos, {}
 
     # def closest_puddle_edges(self):
