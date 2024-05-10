@@ -29,8 +29,11 @@ def evaluate_model(model, eval_episodes, env):
   episode_rewards = []
   episode_steps = []
 
+  seed = 1000
   for episode in range(1, eval_episodes + 1):
-    obs, info = env.reset()
+    
+    obs, info = env.reset(seed=seed)
+    seed += 1
     done = False
     total_reward = 0
     while not done: # to avoid infinite loops for the untuned DQN we set a truncation limit, but you should make your agent sophisticated enough to avoid infinite-step episodes
@@ -69,14 +72,15 @@ if __name__ == '__main__':
     puddle_width=env_setup["puddle_width"],
   )
 
-  ## Initialize model
-  env.reset()
-  model = DQN(DQNPolicy ,env, verbose=1)
-  iter = 0
-  while iter < 10:
-    iter += 1
-    model.learn(total_timesteps=20000)
-    model.save(f"dqn_model_iter{iter}")
+  # ## Initialize model
+  # env.reset()
+  # model = DQN(DQNPolicy ,env, verbose=1)
+  # ## Train model
+  # iter = 0
+  # while iter < 10:
+  #   iter += 1
+  #   model.learn(total_timesteps=20000)
+  #   model.save(f"dqn_model_iter{iter}")
 
   # test the trained model
   # dqn_model = DQN.load("dqn_model")
@@ -91,6 +95,7 @@ if __name__ == '__main__':
   #   # puddle_width=env_setup["puddle_width"],
   # )
   obs, info = env.reset()
+  model = DQN.load("dqn_model_iter1")
   frames, episode_rewards = evaluate_model(model, 10, env)
 
   # print(frames)
