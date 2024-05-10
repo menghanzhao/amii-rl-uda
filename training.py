@@ -102,9 +102,9 @@ if __name__ == '__main__':
   ## Initialize model
   env.reset()
   MODELS = {
-    'dqn': DQN("MlpPolicy" ,env, verbose=1),
-    'ppo': PPO("MlpPolicy", env, verbose=1),
-    'a2c': A2C("MlpPolicy", env, verbose=1),
+    'dqn': DQN, #("MlpPolicy" ,env, verbose=1),
+    'ppo': PPO, #("MlpPolicy", env, verbose=1),
+    'a2c': A2C, #("MlpPolicy", env, verbose=1),
   }
 
   for model_name in MODELS.keys():
@@ -113,11 +113,19 @@ if __name__ == '__main__':
     print("==================================================================================")
     print(f"Training {model_name} model")
 
-    iter = 0
-    while iter < 10:
-      iter += 1
-      model.learn(total_timesteps=int(2e5))
-      model.save(f"models/{model_name}_model_iter{iter}")
+    model_path = os.path.join(dir, "models", f"{model_name}_model_iter10.zip")
+    # print(os.path.exists(model_path))
+    if os.path.exists(model_path):
+      print("Trained model exists, loading model")
+      model = model.load(model_path)
+    else:
+      model = model("MlpPolicy" ,env, verbose=1)
+
+      iter = 0
+      while iter < 10:
+        iter += 1
+        model.learn(total_timesteps=int(2e5))
+        model.save(f"models/{model_name}_model_iter{iter}")
 
     # SUBMISSION
     print(f"Generating {model_name} model evaluation")
@@ -126,7 +134,7 @@ if __name__ == '__main__':
 
     # Evaluate the model
     print('\n')
-    print(f'Evaluation {model_name} model')
+    print(f'Evaluating {model_name} model')
     for seed in seeds:
       seed_data = {'seed_ID': seed}
       for i, config in enumerate(ENV_CONFIGS):
@@ -136,6 +144,10 @@ if __name__ == '__main__':
 
     # Create DataFrame and save to CSV
     df = pd.DataFrame(data)
+    if not os.path.exists(os.path.join(dir, "results")):
+      os.makedirs('results')
+    
     df.to_csv(f'results/Evaluation_{model_name}.csv', index=False)
+    
     print(f"Evaluation of {model_name} completed and results saved.")
 
