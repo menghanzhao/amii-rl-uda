@@ -70,7 +70,7 @@ class PuddleEnv(gymnasium.Env):
         self.min_reward = self.find_min_reward()
         self.heatmap = False
         self.env = 1
-        
+        self.evaluation = False
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
         """
@@ -243,7 +243,7 @@ class PuddleEnv(gymnasium.Env):
         else:
             self.pos = copy.copy(self.start)
 
-        if self.total_episodes % 10 == 0:
+        if self.total_episodes % 10 == 0 and not self.evaluation:
             
             self.env = random.randint(1, 5)
             dir = os.getcwd()
