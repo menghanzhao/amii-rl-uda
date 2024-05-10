@@ -22,6 +22,7 @@ class PuddleEnv(gymnasium.Env):
         puddle_top_left: list[list[float]] = [[0, 0.85], [0.35, 0.9]],
         puddle_width: list[list[float]] = [[0.55, 0.2], [0.2, 0.6]],
         render_mode: str = "rgb_array",
+        config_num: int = 1
     ) -> None:
         """
         Initialize the PuddleEnv environment.
@@ -69,7 +70,7 @@ class PuddleEnv(gymnasium.Env):
         self.window_size = 400
         self.min_reward = self.find_min_reward()
         self.heatmap = False
-        self.env = 1
+        self.env = config_num
         self.evaluation = False
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
@@ -95,7 +96,7 @@ class PuddleEnv(gymnasium.Env):
 
         reward = self._get_reward(self.pos)
 
-        done = (np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold) or (self.num_steps > 5000)
+        done = (np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold) or (self.num_steps > 100000)
 
         if done:
             self.total_episodes += 1
