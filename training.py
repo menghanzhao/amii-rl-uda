@@ -51,7 +51,7 @@ def evaluate_model(model, eval_episodes, env):
   
   return frames, episode_rewards
 
-def evaluate_submit(model, seed, config):
+def evaluate_submit(model, seed, config, config_num):
   dir = os.getcwd()
   json_dir = os.path.join(dir, 'gym_puddle', 'env_configs', config)
   with open(json_dir) as f:
@@ -67,6 +67,7 @@ def evaluate_submit(model, seed, config):
     puddle_width=env_setup["puddle_width"],
   )
   env.evaluation = True
+  env.env = config_num
   obs, info = env.reset(seed=seed)
   total_reward = 0
   done = False
@@ -84,22 +85,6 @@ def generate_test_results_for_submission(model):
 
 if __name__ == '__main__':
   #train the model, and save the trained model
-  ## Initialize environment
-  dir = os.getcwd()
-  json_dir = os.path.join(dir,'gym_puddle', 'env_configs', 'pw1.json')
-  with open(json_dir) as f:
-    env_setup = json.load(f)
-  env = gym.make(
-    "PuddleWorld-v0",
-    start=env_setup["start"],
-    goal=env_setup["goal"],
-    goal_threshold=env_setup["goal_threshold"],
-    noise=env_setup["noise"],
-    thrust=env_setup["thrust"],
-    puddle_top_left=env_setup["puddle_top_left"],
-    puddle_width=env_setup["puddle_width"],
-  )
-
   ## Initialize model
   MODELS = {
     'dqn': DQN, #("MlpPolicy" ,env, verbose=1),
@@ -119,6 +104,21 @@ if __name__ == '__main__':
       print("Trained model exists, loading model")
       model = model.load(model_path)
     else:
+      ## Initialize environment
+      dir = os.getcwd()
+      json_dir = os.path.join(dir,'gym_puddle', 'env_configs', 'pw1.json')
+      with open(json_dir) as f:
+        env_setup = json.load(f)
+      env = gym.make(
+        "PuddleWorld-v0",
+        start=env_setup["start"],
+        goal=env_setup["goal"],
+        goal_threshold=env_setup["goal_threshold"],
+        noise=env_setup["noise"],
+        thrust=env_setup["thrust"],
+        puddle_top_left=env_setup["puddle_top_left"],
+        puddle_width=env_setup["puddle_width"],
+      )
       env.reset()
       model = model("MlpPolicy" ,env, verbose=1)
 
@@ -137,7 +137,7 @@ if __name__ == '__main__':
   for seed in seeds:
     seed_data = {'seed_ID': seed}
     for i, config in enumerate(configs):
-      reward = evaluate_submit(model, seed, config)
+      reward = evaluate_submit(model, seed, config, i+1)
       seed_data[f'ep_reward_pw{i + 1}'] = reward
     data.append(seed_data)
 
