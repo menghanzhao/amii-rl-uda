@@ -100,11 +100,10 @@ if __name__ == '__main__':
   )
 
   ## Initialize model
-  env.reset()
   MODELS = {
     'dqn': DQN, #("MlpPolicy" ,env, verbose=1),
-    'ppo': PPO, #("MlpPolicy", env, verbose=1),
-    'a2c': A2C, #("MlpPolicy", env, verbose=1),
+    # 'ppo': PPO, #("MlpPolicy", env, verbose=1),
+    # 'a2c': A2C, #("MlpPolicy", env, verbose=1),
   }
 
   for model_name in MODELS.keys():
@@ -119,6 +118,7 @@ if __name__ == '__main__':
       print("Trained model exists, loading model")
       model = model.load(model_path)
     else:
+      env.reset()
       model = model("MlpPolicy" ,env, verbose=1)
 
       iter = 0
