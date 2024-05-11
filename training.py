@@ -100,7 +100,7 @@ if __name__ == '__main__':
     puddle_width=env_setup["puddle_width"],
   )
 
-  ## Initialize model
+  ## Initialize modell
   env.reset()
   model = PPO('MlpPolicy' ,env, verbose=1)
   iter = 0

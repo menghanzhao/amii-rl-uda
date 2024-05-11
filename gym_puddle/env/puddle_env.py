@@ -276,7 +276,7 @@ class PuddleEnv(gymnasium.Env):
         for item in distances:
             obs_lst.append(item)
         obs_lst.append(self.env)
-        obs_lst.append(0) # noise x
+        obs_lst.append(0) # noise xx
         obs_lst.append(0) # noise y
         obs_lst.append(0) # radar guide
         obs_lst.append(0) # historical noise meanx
