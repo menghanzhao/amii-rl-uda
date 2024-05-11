@@ -102,12 +102,12 @@ if __name__ == '__main__':
 
   ## Initialize model
   env.reset()
-  model = DQN(DQNPolicy ,env, verbose=1)
+  model = PPO('MlpPolicy' ,env, verbose=1)
   iter = 0
   while iter < 10:
     iter += 1
-    model.learn(total_timesteps=20)
-    model.save(f"dqn_model_iter{iter}")
+    model.learn(total_timesteps=100000)
+    model.save(f"PPONEW2_model_iter{iter}")
 
   # test the trained model
   # dqn_model = DQN.load("dqn_model")

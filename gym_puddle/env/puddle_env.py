@@ -13,15 +13,15 @@ import json
 
 class PuddleEnv(gymnasium.Env):
     def __init__(
-        self,
-        start: list[float] = [0.2, 0.4],
-        goal: list[float] = [1.0, 1.0],
-        goal_threshold: float = 0.1,
-        noise: float = 0.01,
-        thrust: float = 0.05,
-        puddle_top_left: list[list[float]] = [[0, 0.85], [0.35, 0.9]],
-        puddle_width: list[list[float]] = [[0.55, 0.2], [0.2, 0.6]],
-        render_mode: str = "rgb_array",
+            self,
+            start: list[float] = [0.2, 0.4],
+            goal: list[float] = [1.0, 1.0],
+            goal_threshold: float = 0.1,
+            noise: float = 0.01,
+            thrust: float = 0.05,
+            puddle_top_left: list[list[float]] = [[0, 0.85], [0.35, 0.9]],
+            puddle_width: list[list[float]] = [[0.55, 0.2], [0.2, 0.6]],
+            render_mode: str = "rgb_array",
     ) -> None:
         """
         Initialize the PuddleEnv environment.
@@ -49,9 +49,9 @@ class PuddleEnv(gymnasium.Env):
 
         self.action_space = spaces.Discrete(4)
 
-        self.obs_low = np.array([0.0, 0.0, -1.0, -1.0, -1.0, -1.0, 1.0])
-        self.obs_high = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 5.0])
-        self.observation_space = spaces.Box(self.obs_low, self.obs_high, shape=(7,), dtype=np.float64)
+        self.obs_low = np.array([0.0, 0.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1, -1, 0, -1, -1])
+        self.obs_high = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 5.0, 1, 1, 4, 1, 1])
+        self.observation_space = spaces.Box(self.obs_low, self.obs_high, shape=(12,), dtype=np.float64)
 
         self.actions = [np.zeros(2) for i in range(4)]
 
@@ -71,6 +71,7 @@ class PuddleEnv(gymnasium.Env):
         self.heatmap = False
         self.env = 1
         self.evaluation = False
+        self.noisehistory = []
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
         """
@@ -83,7 +84,7 @@ class PuddleEnv(gymnasium.Env):
             tuple[np.ndarray, float, bool, bool, dict]: Tuple containing the new position, reward, done flag, trunc flag, and additional information.
         """
         self.num_steps += 1
-        trunc = False # we don't have a truncation condition for this environment
+        trunc = False  # we don't have a truncation condition for this environment
         assert self.action_space.contains(action), "%r (%s) invalid" % (
             action,
             type(action),
@@ -100,10 +101,28 @@ class PuddleEnv(gymnasium.Env):
         if done:
             self.total_episodes += 1
         distances = self.distance_to_puddle_edges()
+
+        if len(self.noisehistoryx) >= 10:
+            self.noisehistoryx.pop(0)
+        self.noisehistoryx.append(noise[0])
+        # Calculate the mean of elements in the list
+        current_meanx = sum(self.noisehistoryx) / len(self.noisehistoryx)
+
+        if len(self.noisehistoryy) >= 10:
+            self.noisehistoryy.pop(0)
+        self.noisehistoryy.append(noise[1])
+        # Calculate the mean of elements in the list
+        current_meany = sum(self.noisehistoryy) / len(self.noisehistoryy)
+
         obs_lst = list(self.pos)
         for item in distances:
             obs_lst.append(item)
         obs_lst.append(self.env)
+        for item in noise:
+            obs_lst.append(item)
+        obs_lst.append(self.radar_guidance())
+        obs_lst.append(current_meanx)
+        obs_lst.append(current_meany)
 
         return np.array(obs_lst), reward, done, trunc, {}
 
@@ -197,8 +216,8 @@ class PuddleEnv(gymnasium.Env):
         reward_puddles = []
         for top_left, wid in zip(self.puddle_top_left, self.puddle_width):
             if (
-                top_left[0] <= pos[0] <= top_left[0] + wid[0]
-                and top_left[1] - wid[1] <= pos[1] <= top_left[1]
+                    top_left[0] <= pos[0] <= top_left[0] + wid[0]
+                    and top_left[1] - wid[1] <= pos[1] <= top_left[1]
             ):
                 # Calculate the distance from the nearest edge of the puddle to the agent
                 dist_to_edge = max(
@@ -210,16 +229,14 @@ class PuddleEnv(gymnasium.Env):
                 reward_puddle = min(reward, -400 * dist_to_edge)
                 reward_puddles.append(reward_puddle)
         if (
-            reward_puddles == []
-            and np.linalg.norm((pos - self.goal), ord=1) < self.goal_threshold
+                reward_puddles == []
+                and np.linalg.norm((pos - self.goal), ord=1) < self.goal_threshold
         ):
-            return 0 # If the agent is in the goal, return 0
+            return 0  # If the agent is in the goal, return 0
         elif reward_puddles == []:
-            return -1 #-1 for each timestep
+            return -1  # -1 for each timestep
         else:
             return min(reward_puddles)
-
-
 
     def reset(self, seed: int = None, options: dict = None) -> tuple[np.ndarray, dict]:
         """
@@ -237,19 +254,17 @@ class PuddleEnv(gymnasium.Env):
         if self.start is None:
             self.pos = self.observation_space.sample()
             while (
-                np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold
+                    np.linalg.norm((self.pos - self.goal), ord=1) < self.goal_threshold
             ):  # make sure the start position is not too close to the goal
                 self.pos = self.observation_space.sample()
         else:
             self.pos = copy.copy(self.start)
 
         if self.total_episodes % 10 == 0 and not self.evaluation:
-            
             self.env = random.randint(1, 5)
             dir = os.getcwd()
-            json_dir = os.path.join(dir,'gym_puddle', 'env_configs', f'pw{self.env}.json')
+            json_dir = os.path.join(dir, 'gym_puddle', 'env_configs', f'pw{self.env}.json')
             with open(json_dir) as f:
-                
                 env_setup = json.load(f)
 
                 self.puddle_top_left = [np.array(top_left) for top_left in env_setup["puddle_top_left"]]
@@ -261,12 +276,75 @@ class PuddleEnv(gymnasium.Env):
         for item in distances:
             obs_lst.append(item)
         obs_lst.append(self.env)
-            
+        obs_lst.append(0) # noise x
+        obs_lst.append(0) # noise y
+        obs_lst.append(0) # radar guide
+        obs_lst.append(0) # historical noise meanx
+        obs_lst.append(0) # historical noise mena y
+        self.noisehistoryx = []
+        self.noisehistoryy = []
+
         return np.array(obs_lst), {}
         # return self.pos, {}
 
+    def radar_guidance(self):
+        # Check right direction
+        right_info = self.closest_puddle_edge('right')
+        if right_info and right_info['distance'] > 0.1:
+            return 2  # Move right if safe
 
+        # Check upward direction
+        up_info = self.closest_puddle_edge('up')
+        if up_info and up_info['distance'] > 0.1:
+            return 1  # Move up if safe
 
+        # Check downward direction
+        down_info = self.closest_puddle_edge('down')
+        if down_info and down_info['distance'] > 0.1:
+            return 3  # Move down if safe
+
+        # Check leftward direction
+        left_info = self.closest_puddle_edge('left')
+        if left_info and left_info['distance'] > 0.1:
+            return 4  # Move left if safe
+
+        # If no clear path is found, possibly stay in place
+        return 0  # Indicates no movement or a need to reevaluate
+
+    def closest_puddle_edge_for_radar(self, direction):
+        x = self.pos[0]
+        y = self.pos[1]
+        closest_distance = float('inf')
+        puddle_info = None
+
+        for i, (top_left, width) in enumerate(zip(self.puddle_top_left, self.puddle_width)):
+            distance = None
+
+            if direction == 'right' and top_left[1] <= y <= top_left[1] + width[1]:
+                distance = top_left[0] - x
+            elif direction == 'left' and top_left[1] <= y <= top_left[1] + width[1]:
+                distance = x - (top_left[0] + width[0])
+            elif direction == 'up' and top_left[0] <= x <= top_left[0] + width[0]:
+                distance = y - (top_left[1] + width[1])
+            elif direction == 'down' and top_left[0] <= x <= top_left[0] + width[0]:
+                distance = top_left[1] - y
+
+            if distance is not None and 0 <= distance < closest_distance:
+                closest_distance = distance
+                puddle_info = {'index': i, 'distance': distance, 'width': width, 'top_left': top_left}
+
+        return puddle_info
+
+    def radar_guidance(self):
+        directions = ['up', 'right', 'down', 'left']
+        movement_commands = [1, 2, 3, 4]  # Corresponding movement commands for each direction
+
+        for direction, command in zip(directions, movement_commands):
+            info = self.closest_puddle_edge_for_radar(direction)
+            if info and info['distance'] > 0.1:
+                return command  # Return the corresponding command if safe
+
+        return 0
 
     def render(self) -> np.ndarray or None:  # type: ignore
         """
@@ -287,7 +365,7 @@ class PuddleEnv(gymnasium.Env):
         if self.window is None and self.render_mode == "human":
             pygame.init()
             pygame.display.init()
-            #set teh window name
+            # set teh window name
             pygame.display.set_caption("Puddle World")
             self.window = pygame.display.set_mode((self.window_size, self.window_size))
         if self.clock is None and self.render_mode == "human":
@@ -318,8 +396,6 @@ class PuddleEnv(gymnasium.Env):
         )
         pygame.draw.circle(canvas, (0, 255, 0), goal_pos, 10)
 
-       
-
         # Draw the puddles
         for top_left, wid in zip(self.puddle_top_left, self.puddle_width):
             puddle_pos = (
@@ -347,7 +423,7 @@ class PuddleEnv(gymnasium.Env):
 
         else:  # rgb_array
             return np.transpose(pygame.surfarray.pixels3d(canvas), axes=(1, 0, 2))
-        
+
     def close(self) -> None:
         """
         Close the environment.
